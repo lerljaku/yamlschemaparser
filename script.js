@@ -19,7 +19,7 @@ document.getElementById('inputfile').addEventListener('change', function() {
         iObj.id = 0
         body = format_yaml(yaml_data)
         document.getElementById("generateGuiDiv").innerHTML = body
-        document.getElementById("yamlTextArea").value = formatYaml()
+        generateYaml()
     }
       
     fr.readAsText(this.files[0]);

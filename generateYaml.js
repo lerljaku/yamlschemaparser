@@ -5,8 +5,9 @@ function generateYaml(){
     // {
     //     alert("validation error")
     // }
-    
-    textBox.value = formatYaml()
+    var data = collectData();
+    var txt = jsyaml.safeDump(data)
+    textBox.value = txt
 }
 
 function collectData(){
@@ -14,13 +15,10 @@ function collectData(){
 
     elements.sort(compare)
 
-    var yaml = {}
-    
+    var filteredElements = []
     for (var elementIndex in elements)
     {
         var element = elements[elementIndex]
-        var elementName = element.getAttribute("name").replace(/\$\d+/g, mId => document.getElementById(mId).value)
-        var parts = elementName.split('/').slice(1)
         var value = element.value
         var validatorId = element.getAttribute("data-validatorid")
         var validator = validators[validatorId]
@@ -34,107 +32,86 @@ function collectData(){
             continue
         }
 
-        var yamlPart = undefined
-        var arrayIndexMap = {}
-        var tmpNamespace = ``
-        
-        for (var partIndex in parts.slice(0, -1))
-        {
-            var part = parts[partIndex]
-            
-            if (!yaml.includes(part))
-            {
-                if (part.startsWith('['))
-                {
-                    yaml[part] = []                     
-                }
-                else
-                {
-                    yaml[part] = {}
-                }
-            }
-
-            yamlPart = yaml[part]
-            tmpNamespace += `/${part}`
-        }
-
-        var lastPart = parts[parts.length - 1]
+        filteredElements.push(element)       
     }
+
+    return parse(filteredElements)
 }
 
-function formatYaml(){
-    var elements = selectInputElements()
-
-    elements.sort(compare)
-
-    var yamlText = ``
-    var namespaces = []
-    var skipNextIdentation = false
-    for (var elementIndex in elements)
+function parse(elements)
+{    
+    var yaml = {}
+    var indexMap = {}
+    for (var elNameIndex in elements)
     {
-        var element = elements[elementIndex]
+        var element = elements[elNameIndex]
         var elementName = element.getAttribute("name").replace(/\$\d+/g, mId => document.getElementById(mId).value)
-        console.log(elementName)
         var parts = elementName.split('/').slice(1)
+        var yamlPart = yaml
+        var tmpNamespace = ``
+        for (var partIndex in parts.slice(0, -1))
+        {
+            partIndex = parseInt(partIndex)
+
+            var part = parts[partIndex]
+            var nextPart = parts[partIndex + 1]
+
+            if (part.startsWith('['))
+            {
+                if (indexMap[tmpNamespace] === undefined)
+                {
+                    indexMap[tmpNamespace] = {}
+                }
+                if (indexMap[tmpNamespace][part] === undefined)
+                {
+                    indexMap[tmpNamespace][part] = Object.keys(indexMap[tmpNamespace]).length                     
+                } 
+
+                part = indexMap[tmpNamespace][part]
+            }
+
+            tmpNamespace += `/${part}`
+
+            if (yamlPart[part] === undefined)
+            {
+                var dict = undefined
+                if (nextPart.startsWith('['))
+                {
+                    dict = []                   
+                }
+                else
+                {
+                    dict = {}
+                }
+
+                if (yamlPart instanceof Array)
+                {
+                    yamlPart.push(dict)
+                }
+                else
+                {
+                    yamlPart[part] = dict 
+                }                
+            }
+            yamlPart = yamlPart[part]
+        }
+
         var value = element.value
-        var validatorId = element.getAttribute("data-validatorid")
-        var validator = validators[validatorId]
         if (element.type =="checkbox"){
             value = element.checked
         }
-        if (!validator.required && isEmptyOrSpaces(value))
+        if (yamlPart instanceof Array)
         {
-            continue
+            yamlPart.push(element.value)
         }
-        var tmpNamespace = ``
-        for (var partIndex in parts)
+        else
         {
-            var part = parts[partIndex]
-            tmpNamespace += `/${part}`
-
-            if (!namespaces.includes(tmpNamespace))
-            {
-                namespaces.push(tmpNamespace)
-                
-                if (!skipNextIdentation)
-                {
-                    yamlText += "  ".repeat(partIndex)
-                }
-
-                if (part.startsWith('['))
-                {
-                    yamlText += `-`
-                    skipNextIdentation = true
-                }
-                else
-                {
-                    yamlText += `${part}:`
-                    
-                    if (partIndex < (parts.length - 1))
-                    {
-                        yamlText += "\n"
-                    }
-                }
-            }
-            if (partIndex == (parts.length - 1))
-            {                 
-                if (validator instanceof RegexValidator ||
-                    validator instanceof StringValidator ||
-                    validator instanceof EnumValidator)
-                {
-                    yamlText += ` "${value}"`
-                }
-                else
-                {
-                    yamlText += ` ${value}`
-                }
-            }
-        }
-
-        yamlText += `\n`
+            var lastpart = parts[parts.length - 1]
+            yamlPart[lastpart] = element.value
+        }     
     }
 
-    return yamlText
+    return yaml
 }
 
 function validateInputs(){
