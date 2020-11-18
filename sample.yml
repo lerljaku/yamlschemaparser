@@ -1,0 +1,218 @@
+version: "0.9"
+account:
+  alias: amberuat
+  name: amberuat-different
+  update_lock: false
+  environment: "uat"
+  compliance_level: 1
+  owner:
+    email: "paul.zietsman@absa.co.za"
+    slack_webhook: "hook.slack.com/somehash"
+    slack_channel: "mychannel"
+    cio_email: "my-cios-email-address@absa.africa"
+    name: "Paul Zietsman"
+    team_name: "Amber"
+    code: "cldfrc"
+    bu: "CTO"
+    department: "SpecEng"
+    servicenow_id: "SCTASK0165674"
+    cost_center: "455450"
+  aws:
+    primary_region: "eu-west-1"
+    access_to_billing: true
+    enforce_region_lock: true
+    account_email: "cloudadminZZZ@absa.africa"
+    cloudtrail_data_resources:
+      - type: "AWS::Lambda::Function"
+        values: ["arn:aws:lambda"]
+      - type: "AWS::S3::Object"
+        values: ["arn:aws:s3:::some_specific_custom_bucket"]
+    networking:
+      - region: "eu-west-1"
+        vpcs:
+          - vpc_friendly_name: "first_vpc"
+            vpc_cidr: "192.168.154.0/25"
+            features:
+              attachment_subnet_type: "app"
+              enable_api_gateway_endpoint: true
+              enable_app_mesh_endpoint: true
+              enable_app_stream_endpoint: true
+              enable_athena_endpoint: true
+              enable_cloudformation_endpoint: true
+              enable_cloudtrail_endpoint: true
+              enable_codebuild_endpoint: true
+              enable_codecommit_endpoint: true
+              enable_codepipeline_endpoint: true
+              enable_datasync_endpoint: true
+              enable_dns_hostnames: true
+              enable_dns_support: true
+              enable_ec2_endpoint: true
+              enable_ecr_endpoint: true
+              enable_ecs_endpoint: true
+              enable_elastic_inference_endpoint: true
+              enable_elasticloadbalancing_endpoint: true
+              enable_events_endpoint: true
+              enable_glue_endpoint: true
+              enable_custom_dhcp: true
+              enable_kinesis_endpoint: true
+              enable_kinesis_firehose_endpoint: true
+              enable_kms_endpoint: true
+              enable_logs_endpoint: true
+              enable_monitoring_endpoint: true
+              enable_qldb_endpoint: true
+              enable_rekognition_endpoint: true
+              enable_sagemaker_endpoint: true
+              enable_secretsmanager_endpoint: true
+              enable_servicecatalog_endpoint: true
+              enable_sns_endpoint: true
+              enable_sqs_endpoint: true
+              enable_storagegateway_endpoint: true
+              enable_sts_endpoint: true
+              enable_synthetics_endpoint: true
+              enable_transfer_endpoint: true
+              ife_connected: true
+              instance_tenancy: "default"
+              require_igw: true
+              require_spoke_attach: true
+            subnets:
+              web:
+                web:
+                  custom_nacls:
+                    - cidr_block: 199.91.137.20/32
+                      egress: false
+                      protocol: tcp
+                      rule_number: 110
+                      rule_action: allow
+                      from_port: 22
+                      to_port: 22
+                  cidrs:
+                    - cidr: "192.168.154.0/26"
+                      availability_zone: "a"
+                    - cidr: "192.168.154.32/26"
+                      availability_zone: "b"
+                pub:
+                  custom_nacls:
+                    - cidr_block: 199.91.137.20/32
+                      egress: false
+                      protocol: tcp
+                      rule_number: 110
+                      rule_action: allow
+                      from_port: 22
+                      to_port: 22
+                    - cidr_block: 199.91.137.20/32
+                      egress: true
+                      protocol: tcp
+                      rule_number: 110
+                      rule_action: allow
+                      from_port: 22
+                      to_port: 22
+                  cidrs:
+                    - cidr: "192.168.154.64/26"
+                      availability_zone: "a"
+                    - cidr: "192.168.154.96/26"
+                      availability_zone: "b"
+              app:
+                app:
+                  custom_nacls:
+                    - cidr_block: 199.91.137.20/32
+                      egress: false
+                      protocol: tcp
+                      rule_number: 110
+                      rule_action: allow
+                      from_port: 22
+                      to_port: 22
+                  cidrs:
+                    - cidr: "192.168.154.0/26"
+                    - cidr: "192.168.154.32/26"
+      - region: "af-south-1"
+        features:
+          disable_tgw_connection: false
+          disable_ssm_compliance: false
+          disable_flowlog_delivery: false
+        vpcs:
+          - vpc_friendly_name: "second_vpc"
+            vpc_cidr: "192.168.164.0/25"
+            features:
+              require_spoke_attach: true
+            subnets:
+              web:
+                web:
+                  cidrs:
+                    - cidr: "192.168.164.0/26"
+                    - cidr: "192.168.164.32/26"
+                pub:
+                  cidrs:
+                    - cidr: "192.168.164.64/26"
+                    - cidr: "192.168.164.96/26"
+              app:
+                app:
+                  cidrs:
+                    - cidr: "192.168.164.128/26"
+                    - cidr: "192.168.164.160/26"
+    route53:
+      zones:
+        - name: amberuat.aws.dsarena.com.
+          tags:
+            Environment: uat
+          team_codes:
+            - samplename
+      global_zones:
+        - name: dev.aws.dsarena.com.
+          team_codes:
+            - samplename
+
+teams:
+  - name: "Sample Team Name"
+    code: "samplename"
+    email: "cloudeng@absa.co.za"
+    servicenow_id: "SCTASK1656740"
+    cost_center: "455450"
+    update_lock: true
+    iam:
+      pinpoint_nat_ips: ["54.73.73.11/32"]
+      require_hardened_ami: true
+      APIGatewayPermissions: "Deny"
+      AllowHostedZonePermissions: "Deny"
+      AllowXrayPermissions: "Deny"
+      AthenaPermissions: "Deny"
+      BackupPermissions: "Allow"
+      DataSyncPermissions: "Deny"
+      DevToolsPermissions: "Allow"
+      DynamoDBPermissions: "Allow"
+      EC2InstanceConnectPermissions: "Deny"
+      ECRPermissions: "Deny"
+      ECSPermissions: "Deny"
+      EFSPermissions: "Deny"
+      EMRPermissions: "Deny"
+      ElasticTranscoderPermissions: "Deny"
+      ElasticachePermissions: "Deny"
+      ElasticsearchPermissions: "Deny"
+      ElementalPermissions: "Deny"
+      FSxPermissions: "Deny"
+      FullS3Permissions: "Deny"
+      GluePermissions: "Deny"
+      HSMPermissions: "Deny"
+      IAMPermissions: "Deny"
+      KafkaPermissions: "Deny"
+      KinesisPermissions: "Deny"
+      LakeformationPermissions: "Deny"
+      LambdaPermissions: "Deny"
+      LexPermissions: "Deny"
+      LocalKMSPermissions: "Deny"
+      MigrationHubPermissions: "Deny"
+      MQPermissions: "Deny"
+      MachineLearningPermissions: "Deny"
+      PinPointPermissions: "Deny"
+      QuickSightPermissions: "Deny"
+      RDSPermissions: "Deny"
+      RedShiftPermissions: "Deny"
+      RekognitionPermissions: "Deny"
+      SQSPermissions: "Deny"
+      SageMakerPermissions: "Deny"
+      StorageGatewayPermissions: "Deny"
+      WellArchitectedPermissions: "Deny"
+      TextractPermissions: "Deny"
+      #Please consult with Cloud Engineering and Security team before enabling EKS permission
+      EKSFullNotGAPermissions: "Deny"
+      AdministratorAccess: "Deny"
+      CreateS3IAMUser: "Deny"

@@ -1,0 +1,28 @@
+label.requiredField{
+    color: red;
+}
+
+label{
+    font-family: 'Courier New', Courier, monospace;
+}
+
+select{
+    font-family: 'Courier New', Courier, monospace;
+}
+
+option{
+    font-family: 'Courier New', Courier, monospace;
+}
+
+li{
+    margin: 4pt;
+}
+
+ul{
+    padding-left: 12pt;
+}
+
+#generateGuiDiv{
+    overflow-y: scroll;
+    height: fit-content;
+}

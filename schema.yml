@@ -1,0 +1,254 @@
+###############################################################################
+# AWX initial customer request form taken as an input for account setup.
+# AWX template name: (Account Setup - Create Account Workflow)
+###############################################################################
+version: regex("[0-9][0-9]*(\.[0-9][0-9]*(\.[0-9][0-9]*){0,1}){0,1}")
+accountid: regex("[0-9]{1,}", required=False)
+account:
+  notes: list(include("required=False"), required=False)
+  alias: regex("^[a-z0-9\-]{1,30}$", name="account alias")
+  name: regex("^[a-z0-9\-_ ]{1,60}$", name="organization's account name", required=False)
+  update_lock: bool (  required  = False)
+  compliance_level: int(min=1, max=2)
+  aws:
+    primary_region: enum("eu-west-1")
+    access_to_billing: bool(required=False)
+    enforce_region_lock: bool(required=False)
+    enable_via_aws_service: bool(required=False)
+    account_email: regex('.*@.*\..*$', name='email address')
+    cloudtrail_data_resources: list(include("cloudtrail_data_resource"), required=False)
+    networking: list(include("networking_region"), min=1)
+    route53: include("route53", required=False)
+    custom_amis: list(include("custom_ami"), required=False)
+    elasticsearch_ips: str()
+  environment: enum("dev", "test", "uat", "prod")
+  owner:
+    bu: enum("CSO", "CBO", "CTO", "CIB", "WIMI", "RBB", "ARO", "FTECH", "IS", "Test")
+    cio_email: regex('.*@.*\..*$', name='email address')
+    code: regex("^[a-z0-9_]{1,20}$", name="owner code")
+    slack_webhook: str(required=False)
+    slack_channel: str(required=False)
+    cost_center: regex("[0-9]{6}")
+    department: str()
+    email: regex('.*@.*\..*$', name='email address')
+    name: str()
+    team_name: str()
+    servicenow_id: any(enum("None"), regex("SCTASK[0-9]{7,7}"))
+teams: list(include("team"), min=1, required=False)
+
+---
+
+note: str(required=False)
+###################
+# account.aws.kms #
+###################
+
+############################
+# account.aws.accountsetup #
+############################
+
+cloudtrail_data_resource:
+  type: str()
+  values: list(str(), min=1)
+
+#######################
+# account.aws.route53 #
+#######################
+
+route53:
+  zones: list(include("local_zone"), min=1, required=False)
+  global_zones: list(include("global_zone"), min=1, required=False)
+
+local_zone:
+  name: regex("^.*\.$", name="zone name")
+  tags: map(str())
+  team_codes: list(str(), min=1)
+
+global_zone:
+  name: regex("^.*\.$", name="zone name")
+  team_codes: list(str(), min=1)
+
+##########################
+# account.aws.custom_amis #
+##########################
+
+custom_ami:
+  data_confidentiality: enum("Internal Only")
+  name_prefix: regex("^[a-z0-9-]{1,128}_$")
+  personal_data: bool()
+  type: enum("linux", "linux-billing", "windows-billing")
+  ami_name: regex("^[a-z0-9_]{1,30}$", required=False)
+
+##########################
+# account.aws.networking #
+##########################
+
+networking_region:
+  region: enum("eu-west-1", "us-west-2", "af-south-1", "us-east-1", "eu-central-1")
+  vpcs: list(include("vpc"), required=False)
+  network_private_links: list(include("private_link"), min=1, required=False)
+  features: include("networking_regional_features", required=False)
+
+networking_regional_features:
+  disable_tgw_connection: bool(required=False)
+  disable_ssm_compliance: bool(required=False)
+  disable_flowlog_delivery: bool(required=False)
+  disable_igw_bankconnected_check: bool(required=False)
+
+private_link:
+  unique_name: str(max=20)
+  service_provider:
+    provider_service_name: regex("^com.amazonaws.vpce.[a-z0-9\-]*.vpce-svc-[a-z0-9\-]+$", name="privatelink service name created by client", required=False)
+    subnet_ids: list(str(), min=1, required=False)
+    nlb_target_group_arn: regex("^arn:aws:elasticloadbalancing:[a-z0-9\-]*:[0-9]*:targetgroup/[a-z0-9\-]*/[a-z0-9\-]+$", name="private link nlb target group arn", required=False)
+  service_consumer:
+    vpc_id: str()
+    allowed_cidr_blocks: list(regex("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}"))
+    subnet_ids: list(str(), min=1)
+
+vpc:
+  vpc_friendly_name: str(max=20)
+  vpc_cidr: regex("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}")
+  subnets:
+    web: include("subnet_type", required=False)
+    app: include("subnet_type", required=False)
+    data: include("subnet_type", required=False)
+    security: include("subnet_type", required=False)
+    nat: include("subnet_type", required=False)
+  features: include("networking_vpc_features", required=False)
+
+networking_vpc_features:
+  attachment_subnet_type: enum("app", "data", required=False)
+  enable_custom_dhcp: bool(required=False)
+  enable_dns_hostnames: bool(required=False)
+  enable_dns_support: bool(required=False)
+  ife_connected: bool(required=False)
+  instance_tenancy: enum("default", "dedicated", required=False)
+  require_igw: bool(required=False)
+  require_shared: bool(required=False)
+  require_spoke_attach: bool(required=False)
+  enable_api_gateway_endpoint: bool(required=False)
+  enable_app_autoscaling_endpoint: bool(required=False)
+  enable_app_mesh_endpoint: bool(required=False)
+  enable_app_stream_endpoint: bool(required=False)
+  enable_athena_endpoint: bool(required=False)
+  enable_autoscaling_endpoint: bool(required=False)
+  enable_autoscaling_plans_endpoint: bool(required=False)
+  enable_awsconnectory_endpoint: bool(required=False)
+  enable_cloudformation_endpoint: bool(required=False)
+  enable_cloudtrail_endpoint: bool(required=False)
+  enable_codebuild_endpoint: bool(required=False)
+  enable_codecommit_endpoint: bool(required=False)
+  enable_codepipeline_endpoint: bool(required=False)
+  enable_config_endpoint: bool(required=False)
+  enable_datasync_endpoint: bool(required=False)
+  enable_ebs_endpoint: bool(required=False)
+  enable_ec2_endpoint: bool(required=False)
+  enable_ecr_endpoint: bool(required=False)
+  enable_ecs_endpoint: bool(required=False)
+  enable_elastic_inference_endpoint: bool(required=False)
+  enable_elasticloadbalancing_endpoint: bool(required=False)
+  enable_events_endpoint: bool(required=False)
+  enable_glue_endpoint: bool(required=False)
+  enable_kinesis_endpoint: bool(required=False)
+  enable_kinesis_firehose_endpoint: bool(required=False)
+  enable_kms_endpoint: bool(required=False)
+  enable_logs_endpoint: bool(required=False)
+  enable_monitoring_endpoint: bool(required=False)
+  enable_qldb_endpoint: bool(required=False)
+  enable_rekognition_endpoint: bool(required=False)
+  enable_sagemaker_endpoint: bool(required=False)
+  enable_secretsmanager_endpoint: bool(required=False)
+  enable_servicecatalog_endpoint: bool(required=False)
+  enable_sns_endpoint: bool(required=False)
+  enable_sqs_endpoint: bool(required=False)
+  enable_storagegateway_endpoint: bool(required=False)
+  enable_sts_endpoint: bool(required=False)
+  enable_synthetics_endpoint: bool(required=False)
+  enable_transfer_endpoint: bool(required=False)
+
+subnet_type: map(include("subnet"))
+
+subnet:
+  custom_nacls: list(include("nacl"), required=False)
+  cidrs: list(include("cidr"))
+
+nacl:
+  cidr_block: regex("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}")
+  egress: bool()
+  protocol: enum("tcp", "udp", -1)
+  rule_number: int(min=100, max=32000)
+  rule_action: enum("allow", "deny")
+  from_port: int(min=0, max=65535)
+  to_port: int(min=0, max=65535)
+
+cidr:
+  cidr: regex("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}")
+  availability_zone: enum("a", "b", "c", "d", "e", "f", required=False)
+
+#########
+# teams #
+#########
+
+team:
+  code: regex("^[a-z0-9_]{1,20}$", name="team code")
+  email: regex('.*@.*\..*$', name='email address')
+  name: str()
+  cost_center: regex("[0-9]{6}")
+  servicenow_id: any(enum("None"), regex("SCTASK[0-9]{7,7}"), required=True)
+  update_lock: bool(required=False)
+  iam: include("iam", required=False)
+
+iam:
+  pinpoint_nat_ips: list(str(), min=1, required=False)
+  require_hardened_ami: bool(required=False)
+  allowed_assume_roles: list(str(), min=1, required=False)
+  APIGatewayPermissions: enum("Deny", "Allow", required=False)
+  AllowEIPPermissions: enum("Deny", "Allow", required=False)
+  AllowHostedZonePermissions: enum("Deny", "Allow", required=False)
+  AllowXrayPermissions: enum("Deny","Allow", required=False)
+  AthenaPermissions: enum("Deny", "Allow", required=False)
+  BackupPermissions: enum("Deny", "Allow", required=False)
+  DataSyncPermissions: enum("Deny", "Allow", required=False)
+  DevToolsPermissions: enum("Deny", "Allow", required=False)
+  DynamoDBPermissions: enum("Deny", "Allow", required=False)
+  EC2InstanceConnectPermissions: enum("Deny", "Allow", required=False)
+  ECRPermissions: enum("Deny", "Allow", required=False)
+  ECSPermissions: enum("Deny", "Allow", required=False)
+  EFSPermissions: enum("Deny", "Allow", required=False)
+  EMRPermissions: enum("Deny", "Allow", required=False)
+  ElasticTranscoderPermissions: enum("Deny", "Allow", required=False)
+  ElasticachePermissions: enum("Deny", "Allow", required=False)
+  ElasticsearchPermissions: enum("Deny", "Allow", required=False)
+  ElementalPermissions: enum("Deny", "Allow", required=False)
+  FSxPermissions: enum("Deny", "Allow", required=False)
+  FullS3Permissions: enum("Deny", "Allow", required=False)
+  GluePermissions: enum("Deny", "Allow", required=False)
+  HSMPermissions: enum("Deny","Allow", required=False)
+  IAMPermissions: enum("Deny", "Allow", required=False)
+  InsightsPermissions: enum("Deny", "Allow", required=False)
+  KafkaPermissions: enum("Deny", "Allow", required=False)
+  KinesisPermissions: enum("Deny", "Allow", required=False)
+  LakeformationPermissions: enum("Deny", "Allow", required=False)
+  LambdaPermissions: enum("Deny", "Allow", required=False)
+  LexPermissions: enum("Deny", "Allow", required=False)
+  LocalKMSPermissions: enum("Deny", "Allow", required=False)
+  MQPermissions: enum("Deny", "Allow", required=False)
+  MachineLearningPermissions: enum("Deny", "Allow", required=False)
+  MigrationHubPermissions: enum("Deny", "Allow", required=False)
+  PinPointPermissions: enum("Deny", "Allow", required=False)
+  QuickSightContributorPermissions: enum("Deny", "Allow", required=False)
+  QuickSightPermissions: enum("Deny", "Allow", required=False)
+  RDSPermissions: enum("Deny", "Allow", required=False)
+  RedShiftPermissions: enum("Deny", "Allow", required=False)
+  RekognitionPermissions: enum("Deny", "Allow", required=False)
+  SQSPermissions: enum("Deny", "Allow", required=False)
+  SageMakerPermissions: enum("Deny", "Allow", required=False)
+  StorageGatewayPermissions: enum("Deny", "Allow", required=False)
+  SyntheticsPermissions: enum("Deny", "Allow", required=False)
+  TextractPermissions: enum("Deny", "Allow", required=False)
+  WellArchitectedPermissions: enum("Deny", "Allow", required=False)
+  #Please consult with Cloud Engineering and Security team before enabling EKS permission
+  EKSFullNotGAPermissions: enum("Deny", "Allow", required=False)
+  AdministratorAccess: enum("Deny", "Allow", required=False)
+  CreateS3IAMUser: enum("Deny", "Allow", required=False)
